@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+
+    <!-- 讓畫面適應手機與電腦 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>今天吃什麼？</title>
+
+    <style>
+
+        /* =========================
+           1. 外觀設定
+           可以在這裡修改顏色
+        ========================= */
+
+        :root {
+            --main-color: #ff7043;
+            --hover-color: #f4511e;
+            --background-color: #fff8f0;
+            --card-color: #ffffff;
+            --text-color: #333333;
+        }
+
+        /* 整個網頁 */
+
+        body {
+            font-family: Arial, "Microsoft JhengHei", sans-serif;
+
+            background-color: var(--background-color);
+
+            margin: 0;
+            padding: 20px;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            min-height: 100vh;
+
+            box-sizing: border-box;
+        }
+
+        /* 主卡片 */
+
+        .container {
+            background-color: var(--card-color);
+
+            width: 100%;
+            max-width: 420px;
+
+            padding: 30px;
+
+            border-radius: 20px;
+
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+
+            text-align: center;
+
+            box-sizing: border-box;
+        }
+
+        /* 標題 */
+
+        h1 {
+            color: var(--main-color);
+            margin-bottom: 10px;
+        }
+
+        .description {
+            color: #777;
+            margin-bottom: 25px;
+        }
+
+        /* 輸入區 */
+
+        textarea {
+            width: 100%;
+            height: 160px;
+
+            padding: 15px;
+
+            font-size: 18px;
+            line-height: 1.6;
+
+            border: 2px solid #eeeeee;
+            border-radius: 12px;
+
+            resize: vertical;
+
+            box-sizing: border-box;
+
+            font-family: inherit;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--main-color);
+        }
+
+        /* 抽籤按鈕 */
+
+        button {
+            margin-top: 20px;
+
+            width: 100%;
+            padding: 15px;
+
+            background-color: var(--main-color);
+            color: white;
+
+            border: none;
+            border-radius: 12px;
+
+            font-size: 20px;
+            font-weight: bold;
+
+            cursor: pointer;
+
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--hover-color);
+        }
+
+        /* 結果區 */
+
+        .result-box {
+            margin-top: 25px;
+
+            padding: 25px 15px;
+
+            background-color: #fff3e0;
+
+            border-radius: 15px;
+
+            min-height: 100px;
+
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .result-title {
+            font-size: 16px;
+            color: #888;
+        }
+
+        #result {
+            font-size: 30px;
+            font-weight: bold;
+
+            color: var(--main-color);
+
+            margin-top: 15px;
+
+            overflow-wrap: anywhere;
+        }
+
+        /* 底部說明 */
+
+        .footer {
+            margin-top: 20px;
+            font-size: 13px;
+            color: #999;
+        }
+
+    </style>
+</head>
+
+
+<body>
+
+    <div class="container">
+
+        <!-- 標題 -->
+
+        <h1>🍽️ 今天吃什麼？</h1>
+
+        <p class="description">
+            不知道吃什麼？交給命運決定！
+        </p>
+
+
+        <!-- 選項輸入區 -->
+
+        <textarea
+            id="foodInput"
+            aria-label="餐點選項，每行一個"
+            placeholder="每行輸入一個選項"
+        >便當
+麵
+咖哩
+水餃</textarea>
+
+
+        <!-- 抽籤按鈕 -->
+
+        <button id="pickButton" type="button">
+            🎲 幫我選
+        </button>
+
+
+        <!-- 結果顯示區 -->
+
+        <div class="result-box" role="status" aria-live="polite">
+
+            <div class="result-title">
+                🎉 今天就吃
+            </div>
+
+            <div id="result">
+                等待抽籤...
+            </div>
+
+        </div>
+
+
+        <div class="footer">
+            每個有效選項都有相同的抽中機率
+        </div>
+
+    </div>
+
+
+    <script>
+
+        /* =========================
+           2. JavaScript 功能
+        ========================= */
+
+
+        // 取得畫面上的元素
+
+        const foodInput = document.getElementById("foodInput");
+
+        const pickButton = document.getElementById("pickButton");
+
+        const result = document.getElementById("result");
+
+
+        /* =========================
+           3. 整理輸入選項
+        ========================= */
+
+        function getValidOptions() {
+
+            // 讀取輸入框內容
+            const text = foodInput.value;
+
+
+            // 每一行變成一個選項
+            const lines = text.split(/\r?\n/);
+
+
+            // 去除每行前後空白
+            const cleaned = lines.map(function(item) {
+                return item.trim();
+            });
+
+
+            // 去除空白選項
+            const nonEmpty = cleaned.filter(function(item) {
+                return item !== "";
+            });
+
+
+            // 去除完全相同的重複選項
+            const unique = [...new Set(nonEmpty)];
+
+
+            return unique;
+        }
+
+
+        /* =========================
+           4. 隨機抽籤功能
+        ========================= */
+
+        function pickFood() {
+
+            // 取得整理後的選項
+            const options = getValidOptions();
+
+
+            // 如果沒有有效選項
+            if (options.length === 0) {
+
+                result.textContent = "請先輸入至少一個選項";
+
+                return;
+            }
+
+
+            // 產生隨機索引
+            const randomIndex = Math.floor(
+                Math.random() * options.length
+            );
+
+
+            // 取得抽中的選項
+            const selectedFood = options[randomIndex];
+
+
+            // 顯示結果
+            result.textContent = selectedFood;
+
+        }
+
+
+        /* =========================
+           5. 按鈕事件
+        ========================= */
+
+        // 點擊按鈕時執行抽籤
+
+        pickButton.addEventListener("click", pickFood);
+
+    </script>
+
+</body>
+
+</html>
